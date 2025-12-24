@@ -99,7 +99,7 @@ Return structured JSON with metrics, insights, and recommendations.
         self.log("Defining KPI framework...")
 
         context = {
-            "Campaign Strategy": json.dumps(campaign_strategy, indent=2),
+            "Campaign Strategy": json.dumps(campaign_strategy, indent=2, default=str),
             "Objectives": "\n".join(f"- {obj}" for obj in objectives),
         }
 
@@ -258,8 +258,8 @@ Return as JSON:
         self.log("Generating optimization recommendations...")
 
         context = {
-            "Performance Data": json.dumps(performance_data, indent=2),
-            "Campaign Context": json.dumps(campaign_context, indent=2),
+            "Performance Data": json.dumps(performance_data, indent=2, default=str),
+            "Campaign Context": json.dumps(campaign_context, indent=2, default=str),
         }
 
         prompt = """Based on performance data, recommend specific optimizations.

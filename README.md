@@ -112,6 +112,121 @@ poetry run pulsepilot campaign create \
 - Learnings documentation
 - Knowledge archival
 
+### Phase 7: External Deployment (Automatic)
+Phase 7 runs immediately after Phase 6. It acts as the final bridge between the AI agents and the real world, pushing a summary report to your configured external platforms.
+
+#### What it sends:
+A structured summary payload including:
+- 🚀 Campaign Name & ID
+- 📋 Status (Completed/Interrupted)
+- ✍️ Asset count (Landing pages, posts, etc.)
+- 📣 Channel count used
+
+#### Environment Variables Required:
+| Channel | Env Var | Description |
+|---------|---------|-------------|
+| **Global** | `DEPLOYMENT_ENABLED` | `true/false` (Master switch) |
+| **Global** | `DEPLOYMENT_CHANNELS` | Comma-separated list (e.g., `telegram,email`) |
+| **Global** | `DEPLOYMENT_DRY_RUN` | `true/false` (If true, forces simulation) |
+| **Telegram**| `TELEGRAM_BOT_TOKEN`| Bot API token from @BotFather |
+| **Telegram**| `TELEGRAM_CHAT_ID` | Your Chat ID (Use helper tool below) |
+| **X** | `X_API_KEY` / `X_API_SECRET` | Consumer Keys |
+| **X** | `X_ACCESS_TOKEN` / `X_ACCESS_SECRET` | Authentication Tokens |
+| **Instagram** | `INSTAGRAM_ACCESS_TOKEN` | Meta Graph User Access Token |
+| **Instagram** | `INSTAGRAM_IG_USER_ID` | IG Business Account ID |
+| **Instagram** | `INSTAGRAM_IMAGE_URL` | Hosted URL of image to post |
+| **Facebook** | `FACEBOOK_PAGE_ACCESS_TOKEN` | Page Access Token |
+| **Facebook** | `FACEBOOK_PAGE_ID` | Facebook Page ID |
+| **WordPress** | `WORDPRESS_BASE_URL` | e.g. `https://yourblog.com` |
+| **WordPress** | `WORDPRESS_USERNAME` | Your WP username |
+| **WordPress** | `WORDPRESS_APP_PASSWORD` | WP Application Password |
+| **WordPress** | `BLOG_POST_STATUS` | `draft` or `publish` (default `draft`) |
+| **Email** | `SMTP_USER` / `SMTP_PASS`| SMTP credentials |
+| **Email** | `NOTIFY_EMAIL` | Destination address |
+
+#### Running Locally:
+1. **Simulated Mode**: Run without any env vars. Phase 7 will log "simulated" for active channels.
+2. **Real Mode**: Fill in `.env` with real credentials.
+3. **Telegram Helper**: Run `python -m pulsepilot.tools.telegram_get_chat_id` to find your Chat ID after messaging your bot.
+
+### ♾️ 24/7 Monitoring (Scheduler)
+
+PulsePilot includes a scheduler to monitor your campaigns in the background once they have launched.
+
+**How to run**:
+```bash
+python scheduler.py 24
+```
+*(The number `24` is the interval in hours between checks)*
+
+**What it does**:
+1. Scans `memory_store/` for any campaigns in the `feedback` phase.
+2. Runs a performance analysis step for each active campaign.
+3. If the AI finds new optimization recommendations, it sends a summary alert to your **Telegram**.
+4. Sleeps until the next interval.
+
+### Real Deployment Example (.env)
+
+```env
+# Master Switches
+DEPLOYMENT_ENABLED=true
+DEPLOYMENT_CHANNELS=telegram,x,blog
+DEPLOYMENT_DRY_RUN=false
+
+# Telegram
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF
+TELEGRAM_CHAT_ID=987654321
+
+# X (Twitter) - OAuth 1.0a
+X_API_KEY=your_consumer_key
+X_API_SECRET=your_consumer_secret
+X_ACCESS_TOKEN=your_access_token
+X_ACCESS_SECRET=your_access_token_secret
+
+# WordPress
+WORDPRESS_BASE_URL=https://myblog.com
+WORDPRESS_USERNAME=admin
+WORDPRESS_APP_PASSWORD=abcd efgh ijkl mnop
+BLOG_POST_STATUS=draft
+
+# Facebook
+FACEBOOK_PAGE_ACCESS_TOKEN=EAAG...
+FACEBOOK_PAGE_ID=1092837465
+
+# Instagram
+INSTAGRAM_ACCESS_TOKEN=EAAG...
+INSTAGRAM_IG_USER_ID=178414...
+INSTAGRAM_IMAGE_URL=https://example.com/campaign.jpg
+```
+
+---
+
+### Verification Checklist
+
+#### 1. WordPress (Blog)
+- **Setup**: Set `DEPLOYMENT_CHANNELS=blog` and `BLOG_POST_STATUS=draft`.
+- **Run**: `python examples/simple_example.py`
+- **Output**: `✅ Blog: sent` in the report table.
+- **Verification**: Check your WordPress admin -> Posts. You should see a new draft titled "Campaign Recap: TechCorp".
+
+#### 2. Facebook Page
+- **Setup**: Set `DEPLOYMENT_CHANNELS=facebook`.
+- **Run**: `python examples/simple_example.py`
+- **Output**: `✅ Facebook: sent` with a Post ID.
+- **Verification**: Check your Facebook Page. You should see a new post with the campaign summary.
+
+#### 3. Instagram
+- **Setup**: Set `DEPLOYMENT_CHANNELS=instagram`. Ensure `INSTAGRAM_IMAGE_URL` is a publicly accessible direct image link.
+- **Run**: `python examples/simple_example.py`
+- **Output**: `✅ Instagram: sent` with a Media ID.
+- **Verification**: Check your Instagram profile. The image should be posted with the summary as a caption.
+
+#### 4. X (Twitter)
+- **Setup**: Set `DEPLOYMENT_CHANNELS=x`.
+- **Run**: `python examples/simple_example.py`
+- **Output**: `✅ X: sent` with a Tweet ID.
+- **Verification**: Check your X profile for the new tweet. Note: Text is truncated to 280 chars.
+
 ## 🏗️ Project Structure
 
 ```

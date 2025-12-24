@@ -1,5 +1,6 @@
 """30-Day Campaign Workflow Orchestration."""
 
+import os
 import uuid
 from datetime import datetime
 from typing import Any, Optional
@@ -22,6 +23,7 @@ from pulsepilot.agents.market_intel import MarketIntelligenceAgent
 from pulsepilot.agents.content import ContentProductionAgent
 from pulsepilot.agents.distribution import DistributionAgent
 from pulsepilot.agents.analytics import AnalyticsAgent
+from pulsepilot.agents.deployment import DeploymentAgent
 
 
 class CampaignWorkflow:
@@ -39,7 +41,8 @@ class CampaignWorkflow:
 
     def __init__(
         self,
-        campaign_input: CampaignInput,
+        campaign_input: Optional[CampaignInput] = None,
+        campaign_id: Optional[str] = None,
         llm: Optional[LLMInterface] = None,
         auto_approve: bool = False,
     ):
@@ -47,17 +50,30 @@ class CampaignWorkflow:
         Initialize campaign workflow.
 
         Args:
-            campaign_input: Campaign configuration
+            campaign_input: Campaign configuration (required for new campaigns)
+            campaign_id: Existing campaign ID to resume
             llm: Optional LLM interface
             auto_approve: If True, skip approval checkpoints (demo mode)
         """
-        self.campaign_input = campaign_input
-        self.campaign_id = f"campaign_{uuid.uuid4().hex[:8]}"
+        self.campaign_id = campaign_id or f"campaign_{uuid.uuid4().hex[:8]}"
         self.auto_approve = auto_approve
         self.console = Console()
 
         # Initialize shared memory
         self.memory = SharedMemory(self.campaign_id)
+
+        # Handle resume vs new
+        if campaign_input:
+            self.campaign_input = campaign_input
+            # Store campaign input in memory for future resumes
+            self.memory.write("campaign_input", self.campaign_input.model_dump())
+        else:
+            # Try to load from memory if resuming
+            saved_input = self.memory.read("campaign_input")
+            if saved_input:
+                self.campaign_input = CampaignInput(**saved_input)
+            else:
+                raise ValueError("Either campaign_input must be provided or an existing campaign_id with saved state must exist.")
 
         # Initialize LLM
         self.llm = llm or LLMInterface()
@@ -68,9 +84,50 @@ class CampaignWorkflow:
         self.content = ContentProductionAgent(memory=self.memory, llm=self.llm)
         self.distribution = DistributionAgent(memory=self.memory, llm=self.llm)
         self.analytics = AnalyticsAgent(memory=self.memory, llm=self.llm)
+        self.deployment = DeploymentAgent(memory=self.memory, llm=self.llm)
 
-        # Current phase
-        self.current_phase = CampaignPhase.INITIALIZATION
+        # Load current phase from memory or default to INITIALIZATION
+        saved_phase = self.memory.read("current_phase")
+        self.current_phase = CampaignPhase(saved_phase) if saved_phase else CampaignPhase.INITIALIZATION
+
+    def run_feedback_loop_step(self) -> Optional[dict[str, Any]]:
+        """
+        Execute a single iteration of the feedback loop.
+        Used by the scheduler for 24/7 monitoring.
+        """
+        self.console.print(f"\n[bold blue]🔄 Running scheduled feedback loop for {self.campaign_id}...[/bold blue]")
+        
+        # Simulate performance data (in real world, this would fetch from APIs)
+        simulated_metrics = {
+            "impressions": 50000,
+            "clicks": 1000,
+            "ctr": 2.0,
+            "conversions": 75,
+            "cvr": 7.5,
+            "cpa": 150.0,
+        }
+
+        try:
+            performance = self.analytics.analyze_performance(simulated_metrics)
+            
+            # Generate recommendations
+            recommendations = self.analytics.recommend_optimizations(
+                performance_data=performance.model_dump(),
+                campaign_context={"phase": "feedback_loop"},
+            )
+            
+            # Check if we have significant findings
+            if recommendations:
+                return {
+                    "campaign_id": self.campaign_id,
+                    "metrics": simulated_metrics,
+                    "recommendations": recommendations
+                }
+            return None
+
+        except Exception as e:
+            self.console.print(f"[bold red]Error in feedback loop step: {e}[/bold red]")
+            return None
 
     def run(self) -> dict[str, Any]:
         """
@@ -108,6 +165,9 @@ class CampaignWorkflow:
             # Phase 6: Campaign Close
             results = self._phase_6_close()
 
+            # Phase 7: Deployment (Push to external platforms)
+            self._phase_7_deployment(results)
+
             self.console.print("\n[bold green]✅ Campaign workflow completed successfully![/bold green]")
 
             return results
@@ -129,6 +189,7 @@ class CampaignWorkflow:
         - CHECKPOINT: Approve strategy
         """
         self.current_phase = CampaignPhase.INITIALIZATION
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]📋 Phase 1: Initialization[/bold]")
 
         with Progress(
@@ -168,6 +229,7 @@ class CampaignWorkflow:
         - CHECKPOINT: Approve messaging
         """
         self.current_phase = CampaignPhase.STRATEGY
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]🧠 Phase 2: Strategy Definition[/bold]")
 
         with Progress(
@@ -208,6 +270,7 @@ class CampaignWorkflow:
         - CHECKPOINT: Approve launch
         """
         self.current_phase = CampaignPhase.EXECUTION
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]⚡ Phase 3: Parallel Execution[/bold]")
 
         messaging = self.memory.get_messaging()
@@ -290,6 +353,7 @@ class CampaignWorkflow:
         - Deploy ads, emails, outbound
         """
         self.current_phase = CampaignPhase.LAUNCH
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]🚀 Phase 4: Campaign Launch[/bold]")
 
         distribution_plan = self.memory.get_distribution_plan()
@@ -308,6 +372,7 @@ class CampaignWorkflow:
         - Weekly optimization cycles
         """
         self.current_phase = CampaignPhase.FEEDBACK
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]📊 Phase 5: Feedback Loop[/bold]")
 
         # Simulate performance data
@@ -345,6 +410,7 @@ class CampaignWorkflow:
         - Generate report
         """
         self.current_phase = CampaignPhase.CLOSED
+        self.memory.write("current_phase", self.current_phase.value)
         self.console.print("\n[bold]📈 Phase 6: Campaign Close[/bold]")
 
         # Gather all campaign data
@@ -367,6 +433,117 @@ class CampaignWorkflow:
         self.console.print("[green]✓[/green] Campaign archived successfully")
 
         return results
+
+    def _phase_7_deployment(self, results: dict[str, Any]) -> None:
+        """
+        Phase 7: Deployment
+        
+        - Push results to external platforms (Email, Instagram, X, Telegram, FB, Blog)
+        """
+        if not self.deployment.enabled:
+            self.console.print("\n[yellow]📤 Phase 7: External Deployment (Disabled)[/yellow]")
+            return
+
+        self.console.print("\n[bold]📤 Phase 7: External Deployment[/bold]")
+
+        # Plain text summary for simple platforms
+        summary_text = (
+            f"🚀 PulsePilot Campaign Summary\n\n"
+            f"Company: {self.campaign_input.company.name}\n"
+            f"Campaign ID: {results['campaign_id']}\n"
+            f"Status: {results['status']}\n"
+            f"Assets Created: {results['assets_created']}\n"
+            f"Channels Used: {results['channels_used']}\n"
+        )
+
+        # Markdown summary for Telegram/Blog
+        summary_md = (
+            f"🚀 *PulsePilot Campaign Summary*\n\n"
+            f"*Company:* {self.campaign_input.company.name}\n"
+            f"*Campaign ID:* `{results['campaign_id']}`\n"
+            f"*Status:* {results['status']}\n"
+            f"*Assets Created:* {results['assets_created']}\n"
+            f"*Channels Used:* {results['channels_used']}\n"
+        )
+
+        deployment_report = {}
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=self.console,
+        ) as progress:
+            # Blog
+            if self.deployment.is_channel_enabled("blog"):
+                task_blog = progress.add_task("Pushing to Blog...", total=None)
+                res = self.deployment.push_to_blog(
+                    title=f"Campaign Recap: {self.campaign_input.company.name}",
+                    content=summary_md
+                )
+                deployment_report["Blog"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_blog, description=f"{status_char} Blog: {res['status']}")
+
+            # Facebook
+            if self.deployment.is_channel_enabled("facebook"):
+                task_fb = progress.add_task("Pushing to Facebook...", total=None)
+                res = self.deployment.push_to_facebook(message=summary_text)
+                deployment_report["Facebook"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_fb, description=f"{status_char} Facebook: {res['status']}")
+
+            # Instagram
+            if self.deployment.is_channel_enabled("instagram"):
+                task_insta = progress.add_task("Pushing to Instagram...", total=None)
+                res = self.deployment.push_to_instagram(caption=summary_text)
+                deployment_report["Instagram"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_insta, description=f"{status_char} Instagram: {res['status']}")
+
+            # X
+            if self.deployment.is_channel_enabled("x"):
+                task_x = progress.add_task("Pushing to X...", total=None)
+                res = self.deployment.push_to_x(text=summary_text)
+                deployment_report["X"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_x, description=f"{status_char} X: {res['status']}")
+
+            # Telegram
+            if self.deployment.is_channel_enabled("telegram"):
+                task_tg = progress.add_task("Pushing to Telegram...", total=None)
+                res = self.deployment.push_to_telegram(message=summary_md)
+                deployment_report["Telegram"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_tg, description=f"{status_char} Telegram: {res['status']}")
+
+            # Email
+            if self.deployment.is_channel_enabled("email"):
+                task_email = progress.add_task("Pushing to Email...", total=None)
+                res = self.deployment.push_to_email(
+                    subject=f"Campaign Complete: {self.campaign_input.company.name}",
+                    body=summary_text,
+                    recipient=os.getenv("NOTIFY_EMAIL", "user@example.com")
+                )
+                deployment_report["Email"] = res
+                status_char = "✅" if res["status"] in ["sent", "simulated"] else "❌"
+                progress.update(task_email, description=f"{status_char} Email: {res['status']}")
+
+        # Final Deployment Report
+        self.console.print("\n[bold cyan]📊 Deployment Report[/bold cyan]")
+        from rich.table import Table
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Channel")
+        table.add_column("Status")
+        table.add_column("ID/URL/Reason")
+
+        for channel, res in deployment_report.items():
+            status = res["status"]
+            # Prioritize URL or ID for 'sent' status, otherwise show reason/error
+            detail = res.get("url") or res.get("id") or res.get("reason") or res.get("error") or "-"
+            color = "green" if status == "sent" else "yellow" if status == "simulated" else "red"
+            table.add_row(channel, f"[{color}]{status}[/{color}]", str(detail))
+        
+        self.console.print(table)
 
     def _request_approval(self, checkpoint: Checkpoint) -> bool:
         """
