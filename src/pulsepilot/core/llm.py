@@ -3,6 +3,7 @@
 import os
 from typing import Any, Optional
 from abc import ABC, abstractmethod
+from pulsepilot.core.secrets import get_secrets_manager, SecretsManagerInterface
 
 
 class LLMProvider(ABC):
@@ -19,13 +20,19 @@ class LLMProvider(ABC):
 class OpenAIProvider(LLMProvider):
     """OpenAI GPT provider."""
 
-    def __init__(self, model: str = "gpt-4-turbo-preview", api_key: Optional[str] = None):
+    def __init__(
+        self,
+        model: str = "gpt-4-turbo-preview",
+        api_key: Optional[str] = None,
+        secrets_manager: Optional[SecretsManagerInterface] = None
+    ):
         """
         Initialize OpenAI provider.
 
         Args:
             model: Model identifier
-            api_key: Optional API key (defaults to OPENAI_API_KEY env var)
+            api_key: Optional API key (overrides secrets manager)
+            secrets_manager: Optional secrets manager instance
         """
         try:
             from openai import OpenAI
@@ -33,7 +40,13 @@ class OpenAIProvider(LLMProvider):
             raise ImportError("openai package required. Install with: pip install openai")
 
         self.model = model
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self.secrets_manager = secrets_manager or get_secrets_manager()
+
+        # Get API key: direct parameter > secrets manager > fallback to env (for backwards compat)
+        if api_key is None:
+            api_key = self.secrets_manager.get_secret("OPENAI_API_KEY")
+
+        self.client = OpenAI(api_key=api_key)
 
     def complete(
         self, system_prompt: str, user_prompt: str, temperature: float = 0.7
@@ -54,14 +67,18 @@ class AnthropicProvider(LLMProvider):
     """Anthropic Claude provider."""
 
     def __init__(
-        self, model: str = "claude-3-5-sonnet-20241022", api_key: Optional[str] = None
+        self,
+        model: str = "claude-3-5-sonnet-20241022",
+        api_key: Optional[str] = None,
+        secrets_manager: Optional[SecretsManagerInterface] = None
     ):
         """
         Initialize Anthropic provider.
 
         Args:
             model: Model identifier
-            api_key: Optional API key (defaults to ANTHROPIC_API_KEY env var)
+            api_key: Optional API key (overrides secrets manager)
+            secrets_manager: Optional secrets manager instance
         """
         try:
             from anthropic import Anthropic
@@ -69,7 +86,13 @@ class AnthropicProvider(LLMProvider):
             raise ImportError("anthropic package required. Install with: pip install anthropic")
 
         self.model = model
-        self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
+        self.secrets_manager = secrets_manager or get_secrets_manager()
+
+        # Get API key: direct parameter > secrets manager > fallback to env (for backwards compat)
+        if api_key is None:
+            api_key = self.secrets_manager.get_secret("ANTHROPIC_API_KEY")
+
+        self.client = Anthropic(api_key=api_key)
 
     def complete(
         self, system_prompt: str, user_prompt: str, temperature: float = 0.7
@@ -97,6 +120,7 @@ class LLMInterface:
         provider: Optional[str] = None,
         model: Optional[str] = None,
         api_key: Optional[str] = None,
+        secrets_manager: Optional[SecretsManagerInterface] = None,
     ):
         """
         Initialize LLM interface.
@@ -105,27 +129,37 @@ class LLMInterface:
             provider: Optional provider name ('openai' or 'anthropic')
             model: Optional model identifier
             api_key: Optional API key
+            secrets_manager: Optional secrets manager instance
         """
+        self.secrets_manager = secrets_manager or get_secrets_manager()
+
         # Auto-detect provider if not specified
         if provider is None:
-            if os.getenv("ANTHROPIC_API_KEY"):
+            # Check secrets manager first, then fall back to env vars
+            if self.secrets_manager.get_secret("ANTHROPIC_API_KEY"):
                 provider = "anthropic"
-            elif os.getenv("OPENAI_API_KEY"):
+            elif self.secrets_manager.get_secret("OPENAI_API_KEY"):
                 provider = "openai"
             else:
                 raise ValueError(
-                    "No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY"
+                    "No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in secrets manager"
                 )
 
         # Initialize provider
         if provider == "openai":
+            model = model or self.secrets_manager.get_secret(
+                "ORCHESTRATOR_MODEL", "gpt-4-turbo-preview"
+            )
             self.provider: LLMProvider = OpenAIProvider(
-                model=model or os.getenv("ORCHESTRATOR_MODEL", "gpt-4-turbo-preview"),
+                model=model,
                 api_key=api_key,
+                secrets_manager=self.secrets_manager,
             )
         elif provider == "anthropic":
             self.provider = AnthropicProvider(
-                model=model or "claude-3-5-sonnet-20241022", api_key=api_key
+                model=model or "claude-3-5-sonnet-20241022",
+                api_key=api_key,
+                secrets_manager=self.secrets_manager,
             )
         else:
             raise ValueError(f"Unknown provider: {provider}")
