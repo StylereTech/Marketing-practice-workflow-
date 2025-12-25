@@ -26,9 +26,23 @@ env/
 ENV/
 .venv
 
-# Environment variables
+# Environment variables and secrets
 .env
 .env.local
+.env.*.local
+.env.production
+.env.staging
+*.env
+secrets/
+credentials/
+*.key
+*.pem
+*.cert
+*.p12
+*.pfx
+config.local.*
+*secret*
+*credential*
 
 # IDE
 .vscode/

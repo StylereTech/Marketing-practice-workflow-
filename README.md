@@ -310,6 +310,25 @@ poetry run pytest --cov=pulsepilot
 poetry run pytest tests/test_orchestrator.py
 ```
 
+## 🔒 Security
+
+**IMPORTANT**: Never commit API keys or secrets to version control!
+
+PulsePilot handles sensitive credentials for multiple services. Please review our [SECURITY.md](SECURITY.md) for:
+- API key management best practices
+- Environment variable configuration
+- Incident response procedures
+- Security checklist for production deployments
+
+**Quick security tips:**
+- Always use `.env` files for secrets (already in `.gitignore`)
+- Never hardcode API keys in source code
+- Rotate API keys regularly
+- Use different keys for dev/staging/production
+- Enable dry run mode (`DEPLOYMENT_DRY_RUN=true`) when testing
+
+If you accidentally expose an API key, revoke it immediately and generate a new one.
+
 ## 🤝 Contributing
 
 Contributions welcome! Please read our contributing guidelines first.
