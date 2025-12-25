@@ -1,0 +1,272 @@
+{
+  "name": "Style.re",
+  "tagline": "Redefine Your Style",
+  "description": "Style.re is a premium fashion platform that empowers individuals to discover and express their unique style through curated collections and personalized recommendations.",
+
+  "brand_identity": {
+    "mission": "To help people discover their authentic style and express themselves confidently through fashion.",
+    "vision": "A world where everyone feels empowered to express their unique identity through personal style.",
+    "values": [
+      "Authenticity - Be true to yourself and your style",
+      "Quality - Excellence in every detail",
+      "Innovation - Push boundaries while respecting timeless style",
+      "Inclusivity - Style is for everyone",
+      "Sustainability - Fashion that respects our planet"
+    ]
+  },
+
+  "voice_and_tone": {
+    "voice": "Modern, confident, empowering, sophisticated yet approachable",
+    "tone_attributes": [
+      "Inspiring without being preachy",
+      "Confident without being arrogant",
+      "Knowledgeable without being pretentious",
+      "Friendly without being overly casual",
+      "Aspirational yet relatable"
+    ],
+    "language_style": {
+      "do_use": [
+        "Active voice and strong verbs",
+        "Conversational yet polished language",
+        "Specific, concrete descriptions",
+        "Emotionally resonant storytelling",
+        "Questions that engage and inspire"
+      ],
+      "dont_use": [
+        "Overly promotional or salesy language",
+        "Excessive exclamation points",
+        "Industry jargon without context",
+        "Negative or comparison-based messaging",
+        "Clickbait tactics"
+      ]
+    }
+  },
+
+  "visual_identity": {
+    "aesthetic": "Clean, modern, minimalist with intentional bold accents",
+    "color_palette": {
+      "primary": ["Black", "White", "Charcoal Gray"],
+      "accent": ["Gold", "Burnt Sienna", "Deep Forest Green"],
+      "supporting": ["Warm Beige", "Soft Taupe", "Cream"]
+    },
+    "typography": "Modern serif for headlines, clean sans-serif for body",
+    "photography_style": {
+      "principles": [
+        "Natural lighting preferred",
+        "Authentic moments over staged perfection",
+        "Clean backgrounds that don't distract",
+        "Diverse representation in all imagery",
+        "High-quality, professional execution"
+      ],
+      "content_types": [
+        "Product detail shots",
+        "Lifestyle and styling imagery",
+        "Customer stories and testimonials",
+        "Behind-the-scenes moments",
+        "Flat lays and compositions"
+      ]
+    }
+  },
+
+  "content_strategy": {
+    "pillars": [
+      {
+        "name": "Style Education",
+        "description": "Tips, guides, and insights to help people develop their style",
+        "examples": [
+          "How to build a capsule wardrobe",
+          "Understanding your color palette",
+          "Seasonal style transitions"
+        ]
+      },
+      {
+        "name": "Product Showcases",
+        "description": "Highlighting our curated collections and how to style them",
+        "examples": [
+          "New collection reveals",
+          "Styling one piece multiple ways",
+          "Quality and craftsmanship details"
+        ]
+      },
+      {
+        "name": "Customer Stories",
+        "description": "Real transformations and authentic experiences",
+        "examples": [
+          "Style journey testimonials",
+          "Community member spotlights",
+          "Before and after transformations"
+        ]
+      },
+      {
+        "name": "Brand Values",
+        "description": "Behind-the-scenes and our commitment to quality and sustainability",
+        "examples": [
+          "Sustainable sourcing stories",
+          "Artisan and maker features",
+          "Company culture and values"
+        ]
+      },
+      {
+        "name": "Trend Commentary",
+        "description": "Thoughtful analysis of fashion trends and how to adapt them",
+        "examples": [
+          "Trend forecasting and analysis",
+          "Making trends work for you",
+          "Timeless vs. trendy discussion"
+        ]
+      }
+    ],
+
+    "posting_strategy": {
+      "instagram": {
+        "frequency": "3 posts per day",
+        "best_times": ["9:00 AM", "2:00 PM", "7:00 PM"],
+        "content_mix": {
+          "product_focused": "40%",
+          "lifestyle_inspiration": "30%",
+          "education_tips": "20%",
+          "community_ugc": "10%"
+        },
+        "caption_guidelines": {
+          "length": "125-150 words ideal",
+          "structure": "Hook (first 2 lines) → Value/Story → Engagement/CTA",
+          "hashtags": "8-12 relevant tags",
+          "emojis": "Use sparingly, only when adding value"
+        }
+      },
+      "tiktok": {
+        "frequency": "3 posts per day",
+        "best_times": ["9:30 AM", "2:30 PM", "7:30 PM"],
+        "content_style": {
+          "length": "15-30 seconds ideal",
+          "format": "Authentic, trend-aware, entertaining",
+          "hooks": "First 3 seconds are critical",
+          "trends": "Adapt trends to brand voice"
+        },
+        "caption_guidelines": {
+          "length": "100 words maximum",
+          "hashtags": "3-5 relevant tags",
+          "style": "Conversational, native to platform"
+        }
+      }
+    }
+  },
+
+  "target_audience": {
+    "demographics": {
+      "age_range": "25-45 years old",
+      "gender": "All genders",
+      "location": "Urban and suburban, primarily US and Europe",
+      "income": "Middle to upper-middle class"
+    },
+    "psychographics": {
+      "interests": [
+        "Fashion and personal style",
+        "Quality and craftsmanship",
+        "Personal development",
+        "Minimalism and intentional living",
+        "Sustainability"
+      ],
+      "values": [
+        "Authenticity and self-expression",
+        "Quality over quantity",
+        "Continuous personal growth",
+        "Environmental responsibility",
+        "Supporting ethical brands"
+      ],
+      "pain_points": [
+        "Overwhelmed by fast fashion trends",
+        "Struggle to define personal style",
+        "Want quality but need guidance",
+        "Desire sustainable options",
+        "Need wardrobe versatility"
+      ],
+      "aspirations": [
+        "Confident self-expression",
+        "Timeless, versatile wardrobe",
+        "Authentic personal brand",
+        "Sustainable lifestyle",
+        "Quality over quantity mindset"
+      ]
+    }
+  },
+
+  "hashtag_strategy": {
+    "branded_tags": [
+      "#StyleRe",
+      "#RedefineYourStyle",
+      "#StyleReCollection"
+    ],
+    "category_tags": [
+      "#MinimalistStyle",
+      "#TimelessFashion",
+      "#QualityOverQuantity",
+      "#PersonalStyle",
+      "#ModernWardrobe",
+      "#FashionEssentials",
+      "#StyleInspiration",
+      "#OOTD"
+    ],
+    "community_tags": [
+      "#FashionCommunity",
+      "#StyleTips",
+      "#FashionDaily",
+      "#StyleGoals",
+      "#WardrobeEssentials",
+      "#FashionInspo"
+    ],
+    "niche_tags": [
+      "#SustainableFashion",
+      "#SlowFashion",
+      "#ConsciousStyle",
+      "#EthicalFashion",
+      "#CapsuleWardrobe"
+    ]
+  },
+
+  "messaging_examples": {
+    "good_examples": [
+      "Your style journey is uniquely yours. We're here to help you discover what makes you feel most like yourself.",
+      "Quality pieces that stand the test of time—because your wardrobe should work as hard as you do.",
+      "True style isn't about following every trend. It's about finding what resonates with who you are."
+    ],
+    "avoid_examples": [
+      "Buy now! Limited time offer! Don't miss out!!!",
+      "You NEED this in your wardrobe!",
+      "Everyone is wearing this, so should you!",
+      "Transform your style overnight with this one trick!"
+    ]
+  },
+
+  "compliance_and_guidelines": {
+    "must_include": [
+      "Accurate product information",
+      "Honest representation in imagery",
+      "Clear pricing and availability",
+      "Transparent sourcing information when applicable"
+    ],
+    "must_avoid": [
+      "Unrealistic body standards",
+      "Excessive photo manipulation",
+      "False scarcity tactics",
+      "Misleading sustainability claims",
+      "Cultural appropriation"
+    ]
+  },
+
+  "competitive_positioning": {
+    "differentiators": [
+      "Curated selection focused on quality and versatility",
+      "Educational content that empowers customers",
+      "Commitment to sustainable and ethical practices",
+      "Inclusive approach to style",
+      "Premium quality at accessible price points"
+    ],
+    "not_competing_on": [
+      "Lowest price",
+      "Fastest trend adoption",
+      "Largest selection",
+      "Celebrity endorsements"
+    ]
+  }
+}

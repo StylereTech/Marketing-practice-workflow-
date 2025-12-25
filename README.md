@@ -28,6 +28,8 @@ PulsePilot is a sophisticated multi-agent system that orchestrates end-to-end ma
 ## 🎯 Key Features
 
 - **Autonomous Campaign Execution**: 30-day campaign cycles with minimal human intervention
+- **Multi-AI Collaboration**: Claude, ChatGPT, and Gemini working together for optimal content
+- **Social Media Automation**: Automated Instagram & TikTok post generation and scheduling
 - **Specialist Agents**: Each agent focuses on a specific domain (strategy, content, distribution, analytics)
 - **Shared Memory Architecture**: Centralized knowledge base prevents information silos
 - **Human-in-the-Loop Checkpoints**: Strategic approval gates at critical decision points
@@ -48,6 +50,9 @@ poetry install
 
 # Or with pip
 pip install -e .
+
+# For social media automation (includes Gemini support)
+pip install google-generativeai
 ```
 
 ### Configuration
@@ -57,9 +62,14 @@ pip install -e .
 cp .env.example .env
 
 # Edit .env with your API keys
-# OPENAI_API_KEY=your_key_here
-# or
-# ANTHROPIC_API_KEY=your_key_here
+# For multi-AI collaboration:
+# OPENAI_API_KEY=your_chatgpt_key
+# ANTHROPIC_API_KEY=your_claude_key
+# GOOGLE_API_KEY=your_gemini_key
+#
+# For social media deployment:
+# INSTAGRAM_ACCESS_TOKEN=your_token
+# TIKTOK_ACCESS_TOKEN=your_token
 ```
 
 ### Run Your First Campaign
@@ -74,6 +84,19 @@ poetry run pulsepilot campaign create \
   --icp "B2B SaaS CTOs" \
   --budget 50000 \
   --timeline 30
+```
+
+### Social Media Automation (NEW!)
+
+```bash
+# Generate social media posts with AI collaboration
+python examples/stylere_social_automation.py
+
+# Start the daily scheduler
+python social_media_scheduler.py --mode daemon
+
+# See full documentation
+cat docs/SOCIAL_MEDIA_AUTOMATION.md
 ```
 
 ## 📖 Campaign Execution Flow
@@ -296,6 +319,64 @@ performance = memory.get("performance_data")
 
 ⏳ Next checkpoint: Approve launch (in 2 days)
 ```
+
+## 📱 Social Media Automation
+
+PulsePilot now includes automated social media post generation using **multi-AI collaboration**:
+
+### How It Works
+
+1. **Claude (Strategy)**: Analyzes brand guidelines and develops content themes
+2. **ChatGPT (Creation)**: Generates engaging captions, hooks, and hashtags
+3. **Gemini (Refinement)**: Ensures brand consistency and quality
+
+### Features
+
+- ✅ **Automated Daily Posts**: 3 posts per day on Instagram & TikTok
+- ✅ **Brand Consistency**: AI-powered brand alignment scoring (0-100)
+- ✅ **Smart Scheduling**: Posts at optimal times for maximum engagement
+- ✅ **Platform-Specific**: Tailored content for each platform's best practices
+- ✅ **Quality Assurance**: Multi-AI review ensures high-quality output
+
+### Quick Start
+
+```bash
+# 1. Configure your brand guide
+cp brand_guide.json my_brand_guide.json
+# Edit with your brand information
+
+# 2. Set up API keys in .env
+OPENAI_API_KEY=your_key
+ANTHROPIC_API_KEY=your_key
+GOOGLE_API_KEY=your_key
+INSTAGRAM_ACCESS_TOKEN=your_token
+TIKTOK_ACCESS_TOKEN=your_token
+
+# 3. Generate posts
+python examples/stylere_social_automation.py
+
+# 4. Start automated scheduling
+python social_media_scheduler.py --mode daemon
+```
+
+### Example Output
+
+```
+📱 GENERATED POSTS
+
+[Post 1] Instagram Post 1: Style Education
+Theme: Building a versatile wardrobe
+Best Time: morning
+Brand Score: 92/100
+
+Caption:
+Your style journey is uniquely yours. We're here to help you
+discover what makes you feel most like yourself...
+
+Hashtags: #StyleRe #TimelessFashion #QualityOverQuantity...
+```
+
+See [Social Media Automation Documentation](docs/SOCIAL_MEDIA_AUTOMATION.md) for full details.
 
 ## 🧪 Testing
 

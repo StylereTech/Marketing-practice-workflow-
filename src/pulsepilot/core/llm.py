@@ -85,6 +85,49 @@ class AnthropicProvider(LLMProvider):
         return response.content[0].text
 
 
+class GoogleGeminiProvider(LLMProvider):
+    """Google Gemini provider."""
+
+    def __init__(
+        self, model: str = "gemini-1.5-pro", api_key: Optional[str] = None
+    ):
+        """
+        Initialize Google Gemini provider.
+
+        Args:
+            model: Model identifier
+            api_key: Optional API key (defaults to GOOGLE_API_KEY env var)
+        """
+        try:
+            import google.generativeai as genai
+        except ImportError:
+            raise ImportError("google-generativeai package required. Install with: pip install google-generativeai")
+
+        self.model = model
+        api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY not found in environment variables")
+
+        genai.configure(api_key=api_key)
+        self.client = genai.GenerativeModel(model)
+
+    def complete(
+        self, system_prompt: str, user_prompt: str, temperature: float = 0.7
+    ) -> str:
+        """Generate completion using Google Gemini."""
+        # Gemini doesn't have separate system/user roles, combine them
+        combined_prompt = f"{system_prompt}\n\nUser Request:\n{user_prompt}"
+
+        response = self.client.generate_content(
+            combined_prompt,
+            generation_config={
+                'temperature': temperature,
+                'max_output_tokens': 4096,
+            }
+        )
+        return response.text
+
+
 class LLMInterface:
     """
     High-level LLM interface that abstracts provider details.
@@ -102,7 +145,7 @@ class LLMInterface:
         Initialize LLM interface.
 
         Args:
-            provider: Optional provider name ('openai' or 'anthropic')
+            provider: Optional provider name ('openai', 'anthropic', or 'google')
             model: Optional model identifier
             api_key: Optional API key
         """
@@ -112,9 +155,11 @@ class LLMInterface:
                 provider = "anthropic"
             elif os.getenv("OPENAI_API_KEY"):
                 provider = "openai"
+            elif os.getenv("GOOGLE_API_KEY"):
+                provider = "google"
             else:
                 raise ValueError(
-                    "No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY"
+                    "No API key found. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY"
                 )
 
         # Initialize provider
@@ -126,6 +171,10 @@ class LLMInterface:
         elif provider == "anthropic":
             self.provider = AnthropicProvider(
                 model=model or "claude-3-5-sonnet-20241022", api_key=api_key
+            )
+        elif provider == "google":
+            self.provider = GoogleGeminiProvider(
+                model=model or "gemini-1.5-pro", api_key=api_key
             )
         else:
             raise ValueError(f"Unknown provider: {provider}")

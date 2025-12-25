@@ -3,6 +3,7 @@
 import os
 import json
 import smtplib
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Any, Optional, Dict, List
@@ -272,13 +273,13 @@ class DeploymentAgent(BaseAgent):
                 "status": status
             }
             res = requests.post(
-                url, 
+                url,
                 auth=HTTPBasicAuth(username, app_password),
                 json=payload,
                 timeout=15
             )
             data = res.json()
-            
+
             if res.status_code in [201, 200] and "id" in data:
                 return {"status": "sent", "id": data["id"], "url": data.get("link")}
             else:
@@ -287,6 +288,98 @@ class DeploymentAgent(BaseAgent):
         except Exception as e:
             self.log(f"Failed to push to WordPress: {e}", "ERROR")
             return {"status": "failed", "error": str(e)}
+
+    def push_to_tiktok(self, caption: str, video_url: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Push content to TikTok via Content Posting API.
+
+        Note: TikTok API requires pre-uploaded video. This implementation assumes
+        video is already hosted and accessible via URL.
+        """
+        if not self.is_channel_enabled("tiktok"):
+            return {"status": "skipped", "reason": "channel_not_in_list"}
+
+        self.log("Pushing to TikTok...")
+        access_token = os.getenv("TIKTOK_ACCESS_TOKEN")
+        video_url = video_url or os.getenv("TIKTOK_VIDEO_URL")
+
+        if self.dry_run or not all([access_token, video_url]):
+            reason = "dry_run" if self.dry_run else "missing_credentials"
+            self.log(f"Simulating TikTok push ({reason}).", "WARNING")
+            return {"status": "simulated", "reason": reason, "message": "TikTok post scheduled"}
+
+        try:
+            # TikTok Content Posting API v2
+            url = "https://open.tiktokapis.com/v2/post/publish/video/init/"
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "post_info": {
+                    "title": caption[:150],  # TikTok has character limits
+                    "privacy_level": "PUBLIC_TO_EVERYONE",
+                    "disable_duet": False,
+                    "disable_comment": False,
+                    "disable_stitch": False,
+                    "video_cover_timestamp_ms": 1000
+                },
+                "source_info": {
+                    "source": "PULL_FROM_URL",
+                    "video_url": video_url
+                }
+            }
+
+            res = requests.post(url, headers=headers, json=payload, timeout=30)
+            data = res.json()
+
+            if res.status_code == 200 and data.get("data", {}).get("publish_id"):
+                publish_id = data["data"]["publish_id"]
+                self.log(f"TikTok video queued for publishing: {publish_id}")
+                return {"status": "sent", "publish_id": publish_id}
+            else:
+                error_msg = data.get("error", {}).get("message", "Unknown error")
+                return {"status": "failed", "error": error_msg}
+
+        except Exception as e:
+            self.log(f"Failed to push to TikTok: {e}", "ERROR")
+            return {"status": "failed", "error": str(e)}
+
+    def schedule_post(
+        self,
+        platform: str,
+        content: Dict[str, Any],
+        scheduled_time: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Schedule a post for future publication.
+
+        Args:
+            platform: Target platform (instagram, tiktok, facebook, x)
+            content: Content dictionary with caption, media URLs, etc.
+            scheduled_time: ISO format timestamp for scheduling
+
+        Returns:
+            Status dictionary
+        """
+        self.log(f"Scheduling {platform} post for {scheduled_time or 'immediate'} publication...")
+
+        # For now, this creates a scheduling record in memory
+        # In production, this would integrate with platform scheduling APIs or cron jobs
+        schedule_record = {
+            "platform": platform,
+            "content": content,
+            "scheduled_time": scheduled_time or datetime.utcnow().isoformat(),
+            "status": "scheduled",
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        # Store in memory for tracking
+        self.memory.append("scheduled_posts", schedule_record, agent_id=self.role_name)
+
+        return {"status": "scheduled", "record": schedule_record}
 
     def _generic_execution(self, task: AgentTask) -> AgentOutput:
         return AgentOutput(
